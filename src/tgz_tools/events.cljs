@@ -8,3 +8,8 @@
  ::initialize-db
  (fn [_ _]
    db/default-db))
+
+(re-frame/reg-event-db
+ ::set-value
+ (fn [db [_ key value]]
+   (assoc db key value)))
