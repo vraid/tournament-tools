@@ -82,7 +82,7 @@
 (def groups-of-7 "Groups of 7 (4 games)")
 (def groups-of-13 "Groups of 13 (4 games)")
 (def groups-of-16 "Groups of 16 (5 games)")
-(def groupless-loop "Groupless - loop (4 games)")
+(def groupless-loop "Groupless - no repeat matchups (4 games)")
 
 (def method-dict
   {groups-of-7

@@ -61,7 +61,7 @@
        [:div
         [:div [:label "Result"]]
         [:textarea
-         {:cols 60
+         {:cols (inc (reduce max 20 (map count games)))
           :rows (inc (count games))
           :read-only true
           :value (string/join "\n" games)}]])]))
