@@ -1,5 +1,9 @@
-(ns tgz-tools.db)
+(ns tgz-tools.db
+  (:require [tgz-tools.methods :as methods]))
 
 (def default-db
-  {:players ""
-   :previous-winners ""})
+  (let
+   [default-method methods/groups-of-7]
+    {:players ""
+     :previous-winners ""
+     :method default-method}))
