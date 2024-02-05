@@ -45,7 +45,8 @@
         :on-change (update-value :method)}
        (option methods/groups-of-7)
        (option methods/groups-of-13)
-       (option methods/groups-of-16)]]
+       (option methods/groups-of-16)
+       (option methods/groupless-loop)]]
      [:div [:label "Players"]]
      (linked-text-area :players)
      [:div [:label "Previous winners"]]

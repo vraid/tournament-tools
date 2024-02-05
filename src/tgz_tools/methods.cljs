@@ -50,9 +50,39 @@
     group-size
     (partial group-of-n-games indices))))
 
+(defn intersperse-winners [players previous-winners]
+  (let
+   [[non-winners winners] (split-player-by-type players previous-winners)]
+    (loop [players non-winners
+           winners winners
+           result []]
+      (if (empty? winners)
+        (into result players)
+        (recur (drop 4 players) (rest winners) (into result (into [(first winners)] (take 4 players))))))))
+
+(defn groupless-loop-split [players previous-winners]
+  (let
+   [interspersed (intersperse-winners players previous-winners)
+    player-count (count interspersed)
+    nth-player (fn [n] (nth interspersed (mod n player-count)))]
+    (map (fn [index]
+           (cons (inc index)
+                 (map (comp nth-player (partial + index))
+                      [0 1 3 7])))
+         (range player-count))))
+
+(defn groupless-loop-validate [players previous-winners]
+  (let
+   [player-count (count players)]
+    (cond
+      (< player-count 15) [true "player count less than 15"]
+      (< player-count (* 5 (count previous-winners))) [true "more than 1 previous winner per 5 players"]
+      :else [false (groupless-loop-split players previous-winners)])))
+
 (def groups-of-7 "Groups of 7 (4 games)")
 (def groups-of-13 "Groups of 13 (4 games)")
 (def groups-of-16 "Groups of 16 (5 games)")
+(def groupless-loop "Groupless - loop (4 games)")
 
 (def method-dict
   {groups-of-7
@@ -82,7 +112,8 @@
                     [0 4 8 12] [1 5 9 13] [2 6 10 14] [3 7 11 15]
                     [0 5 10 15] [1 4 11 14] [2 7 8 13] [3 6 9 12]
                     [0 6 11 13] [1 7 10 12] [2 4 9 15] [3 5 8 14]
-                    [0 7 9 14] [1 6 8 15] [2 5 11 12] [3 4 10 13]])})
+                    [0 7 9 14] [1 6 8 15] [2 5 11 12] [3 4 10 13]])
+   groupless-loop groupless-loop-validate})
 
 (defn validate-input [players previous-winners]
   (let
