@@ -14,6 +14,7 @@
 
 (defn main-panel []
   (let [data @(re-frame/subscribe [::subs/db])
+        title (:title data)
         update-value (fn [key]
                        (fn [e] (re-frame/dispatch
                                 [::events/set-value key (gettext e)])))
@@ -21,7 +22,7 @@
                             (:method data)
                             (:players data)
                             (:previous-winners data))
-        games (if error? [] (map format-game validated))
+        games (if error? [] (map (comp (partial str title) format-game) validated))
         option (fn [name] [:option {:key name} name])
         linked-text-area (fn [key]
                            (let
@@ -33,7 +34,7 @@
                                :value value}]))]
     [:div
      [:h1
-      "TGZ tools"]
+      "TGZ tools"] 
      [:div
       [:label "Method "]
       [:select.form-control
@@ -47,6 +48,10 @@
        (option methods/groups-of-13)
        (option methods/groups-of-16)
        (option methods/groupless-loop)]]
+     [:div [:label "Tournament title"]]
+     [:input {:type "text"
+              :value (:title data)
+              :on-change (update-value :title)}]
      [:div [:label "Players"]]
      (linked-text-area :players)
      [:div [:label "Previous winners"]]
