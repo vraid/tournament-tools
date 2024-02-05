@@ -67,7 +67,7 @@
     nth-player (fn [n] (nth interspersed (mod n player-count)))]
     (map (fn [index]
            (cons (inc index)
-                 (map (comp nth-player (partial + index))
+                 (map (comp nth-player (partial - index))
                       [0 1 3 7])))
          (range player-count))))
 
