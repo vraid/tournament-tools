@@ -5,6 +5,7 @@
    [tgz-tools.events :as events]
    [tgz-tools.util :as util]
    [tgz-tools.methods :as methods]
+   [tgz-tools.tables :as tables]
    [clojure.string :as string]))
 
 (defn gettext [e] (-> e .-target .-value))
@@ -22,7 +23,10 @@
                             (:method data)
                             (:players data)
                             (:seeds data))
-        games (if error? [] (map (comp (partial str title) format-game) validated))
+        [games table] (if (or error? (empty? validated)) [[] []]
+                          [(map (comp (partial str title) format-game) validated)
+                           (tables/bgg-table validated)])
+        textarea-width (inc (reduce max 20 (map count games)))
         option (fn [name] [:option {:key name} name])
         linked-text-area (fn [key]
                            (let
@@ -61,7 +65,13 @@
        [:div
         [:div [:label "Result"]]
         [:textarea
-         {:cols (inc (reduce max 20 (map count games)))
+         {:cols textarea-width
           :rows (inc (count games))
           :read-only true
-          :value (string/join "\n" games)}]])]))
+          :value (string/join "\n" games)}]
+        [:div [:label "BGG table"]]
+        [:textarea
+         {:cols textarea-width
+          :rows 10
+          :read-only true
+          :value table}]])]))
