@@ -21,7 +21,7 @@
         [error? validated] (methods/result
                             (:method data)
                             (:players data)
-                            (:previous-winners data))
+                            (:seeds data))
         games (if error? [] (map (comp (partial str title) format-game) validated))
         option (fn [name] [:option {:key name} name])
         linked-text-area (fn [key]
@@ -34,7 +34,7 @@
                                :value value}]))]
     [:div
      [:h1
-      "TGZ tools"] 
+      "TGZ tools"]
      [:div
       [:label "Method "]
       [:select.form-control
@@ -54,8 +54,8 @@
               :on-change (update-value :title)}]
      [:div [:label "Players"]]
      (linked-text-area :players)
-     [:div [:label "Previous winners"]]
-     (linked-text-area :previous-winners)
+     [:div [:label "Seeds"]]
+     (linked-text-area :seeds)
      (if error?
        [:div [:b (str "Error: " validated)]]
        [:div

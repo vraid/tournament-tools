@@ -1,11 +1,11 @@
 (ns tgz-tools.methods
   (:require [tgz-tools.util :as util]))
 
-(defn split-player-by-type [players previous-winners]
+(defn split-player-by-type [players seeds]
   [(filter (fn [name]
-             (not (some #{name} previous-winners)))
+             (not (some #{name} seeds)))
            players)
-   previous-winners])
+   seeds])
 
 (defn group-of-n-games [indices group-id players]
   (map-indexed (fn [game-id group]
@@ -16,32 +16,33 @@
                indices))
 
 (defn groups-of-n-split [group-size to-games]
-  (fn [players previous-winners]
+  (fn [players seeds]
     (let
-     [[non-winners winners] (split-player-by-type players previous-winners)]
+     [[players seeds] (split-player-by-type players seeds)]
       (loop [group-id 65
-             players non-winners
-             winners winners
+             players players
+             seeds seeds
              result []]
         (if (empty? players)
           result
           (let
-           [winner? (seq winners)
+           [winner? (seq seeds)
             player-count (if winner? (dec group-size) group-size)]
             (recur (inc group-id)
                    (drop player-count players)
-                   (drop 1 winners)
-                   (into result (to-games (char group-id) (into (vec (take 1 winners)) (take player-count players)))))))))))
+                   (drop 1 seeds)
+                   (into result (to-games (char group-id) (into (vec (take 1 seeds)) (take player-count players)))))))))))
 
 (defn groups-of-n-validate [group-size split]
-  (fn [players previous-winners]
+  (fn [players seeds]
     (let
      [player-count (count players)
+      seed-count (count seeds)
       group-count (/ player-count group-size)]
       (cond
         (not (zero? (mod player-count group-size))) [true (str "player count of " player-count " not divisible by " group-size)]
-        (> (count previous-winners) group-count) [true (str "more previous winners than groups")]
-        :else [false (split players previous-winners)]))))
+        (> seed-count group-count) [true (str "more seeds (" seed-count ") than groups (" group-count ")")]
+        :else [false (split players seeds)]))))
 
 (defn groups-of-n [group-size indices]
   (groups-of-n-validate
@@ -50,19 +51,19 @@
     group-size
     (partial group-of-n-games indices))))
 
-(defn intersperse-winners [players previous-winners]
+(defn intersperse-seeds [players seeds]
   (let
-   [[non-winners winners] (split-player-by-type players previous-winners)]
-    (loop [players non-winners
-           winners winners
+   [[players seeds] (split-player-by-type players seeds)]
+    (loop [players players
+           seeds seeds
            result []]
-      (if (empty? winners)
+      (if (empty? seeds)
         (into result players)
-        (recur (drop 4 players) (rest winners) (into result (into [(first winners)] (take 4 players))))))))
+        (recur (drop 4 players) (rest seeds) (into result (into [(first seeds)] (take 4 players))))))))
 
-(defn groupless-loop-split [players previous-winners]
+(defn groupless-loop-split [players seeds]
   (let
-   [interspersed (intersperse-winners players previous-winners)
+   [interspersed (intersperse-seeds players seeds)
     player-count (count interspersed)
     nth-player (fn [n] (nth interspersed (mod n player-count)))]
     (map (fn [index]
@@ -71,13 +72,13 @@
                       [0 1 3 7])))
          (range player-count))))
 
-(defn groupless-loop-validate [players previous-winners]
+(defn groupless-loop-validate [players seeds]
   (let
    [player-count (count players)]
     (cond
       (< player-count 15) [true "player count less than 15"]
-      (< player-count (* 5 (count previous-winners))) [true "more than 1 previous winner per 5 players"]
-      :else [false (groupless-loop-split players previous-winners)])))
+      (< player-count (* 5 (count seeds))) [true "more than 1 seed per 5 players"]
+      :else [false (groupless-loop-split players seeds)])))
 
 (def groups-of-7 "Groups of 7 (4 games)")
 (def groups-of-13 "Groups of 13 (4 games)")
@@ -115,24 +116,24 @@
                     [0 7 9 14] [1 6 8 15] [2 5 11 12] [3 4 10 13]])
    groupless-loop groupless-loop-validate})
 
-(defn validate-input [players previous-winners]
+(defn validate-input [players seeds]
   (let
    [duplicate-players (util/duplicates players)
-    duplicate-winners (util/duplicates previous-winners)
-    winners-not-present (filter (fn [name]
-                                  (not (some #{name} players)))
-                                previous-winners)]
+    duplicate-seeds (util/duplicates seeds)
+    seeds-not-present (filter (fn [name]
+                                (not (some #{name} players)))
+                              seeds)]
     (cond
       (seq duplicate-players) [true (str "duplicate players " duplicate-players)]
-      (seq winners-not-present) [true (str "winners not present in player list " winners-not-present)]
-      (seq duplicate-winners) [true (str "duplicate winners " duplicate-winners)]
+      (seq seeds-not-present) [true (str "seeds not present in player list " seeds-not-present)]
+      (seq duplicate-seeds) [true (str "duplicate seeds " duplicate-seeds)]
       :else [false ""])))
 
-(defn result [method-name players previous-winners]
+(defn result [method-name players seeds]
   (let
    [players (util/trimmed-lines players)
-    previous-winners (util/trimmed-lines previous-winners)
-    [error? validated] (validate-input players previous-winners)]
+    seeds (util/trimmed-lines seeds)
+    [error? validated] (validate-input players seeds)]
     (if error?
       [error? validated]
-      ((get method-dict method-name) players previous-winners))))
+      ((get method-dict method-name) players seeds))))

@@ -4,5 +4,5 @@
 (def default-db
   {:title ""
    :players ""
-   :previous-winners ""
+   :seeds ""
    :method methods/groups-of-7})
