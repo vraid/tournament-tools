@@ -7,13 +7,17 @@
            players)
    seeds])
 
-(defn group-of-n-games [indices group-id players]
-  (map-indexed (fn [game-id group]
+(defn group-of-n-games [indices {:keys [name players]}]
+  (map-indexed (fn [game-id player-indices]
                  (cons
-                  (str group-id (inc game-id))
+                  (str name (inc game-id))
                   (map (partial nth players)
-                       group)))
+                       player-indices)))
                indices))
+
+(defn to-group [name players]
+  {:name name
+   :players players})
 
 (defn groups-of-n-split [group-size to-games]
   (fn [players seeds]
@@ -22,16 +26,20 @@
       (loop [group-id 65
              players players
              seeds seeds
-             result []]
+             groups []
+             games []]
         (if (empty? players)
-          result
+          [groups games]
           (let
            [winner? (seq seeds)
-            player-count (if winner? (dec group-size) group-size)]
+            player-count (if winner? (dec group-size) group-size)
+            group (to-group (char group-id)
+                            (into (vec (take 1 seeds)) (take player-count players)))]
             (recur (inc group-id)
                    (drop player-count players)
                    (drop 1 seeds)
-                   (into result (to-games (char group-id) (into (vec (take 1 seeds)) (take player-count players)))))))))))
+                   (conj groups group)
+                   (into games (to-games group)))))))))
 
 (defn groups-of-n-validate [group-size split]
   (fn [players seeds]
@@ -65,12 +73,14 @@
   (let
    [interspersed (intersperse-seeds players seeds)
     player-count (count interspersed)
-    nth-player (fn [n] (nth interspersed (mod n player-count)))]
-    (map (fn [index]
-           (cons (inc index)
-                 (map (comp nth-player (partial - index))
-                      [0 1 3 7])))
-         (range player-count))))
+    nth-player (fn [n] (nth interspersed (mod n player-count)))
+    group (to-group "Players" interspersed)
+    games (map (fn [index]
+                 (cons (str (inc index))
+                       (map (comp nth-player (partial - index))
+                            [0 1 3 7])))
+               (range player-count))]
+    [[group] games]))
 
 (defn groupless-loop-validate [players seeds]
   (let

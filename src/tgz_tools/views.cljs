@@ -23,10 +23,26 @@
                             (:method data)
                             (:players data)
                             (:seeds data))
-        [games table] (if (or error? (empty? validated)) [[] []]
-                          [(map (comp (partial str title) format-game) validated)
-                           (tables/bgg-table validated)])
-        textarea-width (inc (reduce max 20 (map count games)))
+        [groups games] (if error? [[] []] validated)
+        [game-csv game-table group-table]
+        (if (or error? (empty? games)) [[] "" ""]
+            (let
+             [game-csv (map (comp (partial str title) format-game) games)
+              seeds (string/split (:seeds data) "\n")
+              tag-str (comp (partial tables/join-with-tag "") tables/tag)
+              game-table (tables/bgg-table (fn [_ col str]
+                                             (if (zero? col)
+                                               ((tag-str "[b]" "[/b]") str)
+                                               str))
+                                           games)
+              group-table (tables/bgg-table (fn [row _ str]
+                                              ((cond (zero? row) (tag-str "[b]" "[/b]")
+                                                     (some #{str} seeds) (tag-str "[u]" "[/u]")
+                                                     :else identity)
+                                               str))
+                                            (cons (map :name groups) (tables/transpose (map :players groups))))]
+              [game-csv game-table group-table]))
+        textarea-width (inc (reduce max 20 (map count game-csv)))
         option (fn [name] [:option {:key name} name])
         linked-text-area (fn [key]
                            (let
@@ -63,15 +79,21 @@
      (if error?
        [:div [:b (str "Error: " validated)]]
        [:div
-        [:div [:label "Result"]]
+        [:div [:label "Games (CSV)"]]
         [:textarea
          {:cols textarea-width
-          :rows (inc (count games))
+          :rows (inc (count game-csv))
           :read-only true
-          :value (string/join "\n" games)}]
-        [:div [:label "BGG table"]]
+          :value (string/join "\n" game-csv)}]
+        [:div [:label "Groups (BGG table)"]]
         [:textarea
          {:cols textarea-width
           :rows 10
           :read-only true
-          :value table}]])]))
+          :value group-table}]
+        [:div [:label "Games (BGG table)"]]
+        [:textarea
+         {:cols textarea-width
+          :rows 10
+          :read-only true
+          :value game-table}]])]))
