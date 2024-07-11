@@ -67,7 +67,8 @@
        (option methods/groups-of-7)
        (option methods/groups-of-13)
        (option methods/groups-of-16)
-       (option methods/groupless-loop)]]
+       (option methods/groupless-loop)
+       (option methods/groupless-loop-five-games)]]
      [:div [:label "Tournament title"]]
      [:input {:type "text"
               :value (:title data)

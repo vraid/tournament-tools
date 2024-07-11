@@ -90,10 +90,42 @@
       (< player-count (* 5 (count seeds))) [true "more than 1 seed per 5 players"]
       :else [false (groupless-loop-split players seeds)])))
 
+(defn groupless-loop-five-games-split [players seeds]
+  (let
+   [interspersed (intersperse-seeds players seeds)
+    player-count (count interspersed)
+    nth-player (fn [n] (nth interspersed (mod n player-count)))
+    group (to-group "Players" interspersed)
+    games (concat
+           (map (fn [index]
+                  (cons (str (inc index))
+                        (map (comp nth-player (partial - index))
+                             [0 1 3 7])))
+                (range player-count))
+           (map (fn [index]
+                  (let
+                   [first-offset (* index 2)
+                    second-offset (+ first-offset (/ player-count 2))]
+                    (cons (str (inc (+ player-count index)))
+                          (map (comp nth-player)
+                               [first-offset (inc first-offset) second-offset (inc second-offset)]))))
+                (range 0 (/ player-count 4))))]
+    [[group] games]))
+
+(defn groupless-loop-five-games-validate [players seeds]
+  (let
+   [player-count (count players)]
+    (cond
+      (< player-count 16) [true "player count less than 16"]
+      (not (zero? (mod player-count 4))) [true (str "player count of " player-count " not divisible by 4")]
+      (< player-count (* 5 (count seeds))) [true "more than 1 seed per 5 players"]
+      :else [false (groupless-loop-five-games-split players seeds)])))
+
 (def groups-of-7 "Groups of 7 (4 games)")
 (def groups-of-13 "Groups of 13 (4 games)")
 (def groups-of-16 "Groups of 16 (5 games)")
 (def groupless-loop "Groupless - no repeat matchups (4 games)")
+(def groupless-loop-five-games "Groupless - one repeat matchup (5 games)")
 
 (def method-dict
   {groups-of-7
@@ -124,7 +156,8 @@
                     [0 5 10 15] [1 4 11 14] [2 7 8 13] [3 6 9 12]
                     [0 6 11 13] [1 7 10 12] [2 4 9 15] [3 5 8 14]
                     [0 7 9 14] [1 6 8 15] [2 5 11 12] [3 4 10 13]])
-   groupless-loop groupless-loop-validate})
+   groupless-loop groupless-loop-validate
+   groupless-loop-five-games groupless-loop-five-games-validate})
 
 (defn validate-input [players seeds]
   (let
