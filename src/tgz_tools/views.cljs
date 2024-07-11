@@ -57,7 +57,7 @@
                                :value value}]))]
     [:div
      [:h1
-      "TGZ tools"]
+      "Tournament tools"]
      [:div
       [:label "Method "]
       [:select.form-control
