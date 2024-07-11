@@ -24,11 +24,14 @@
                             (:players data)
                             (:seeds data))
         [groups games] (if error? [[] []] validated)
-        [game-csv game-table group-table]
-        (if (or error? (empty? games)) [[] "" ""]
+        [game-csv seed-matchups game-table group-table]
+        (if (or error? (empty? games)) [[] [] "" ""]
             (let
              [game-csv (map (comp (partial str title) format-game) games)
               seeds (string/split (:seeds data) "\n")
+              seed-matchups (filter (fn [game]
+                                      (< 1 (count (filter (fn [player] (some #{player} seeds)) game))))
+                                    games)
               tag-str (comp (partial tables/join-with-tag "") tables/tag)
               game-table (tables/bgg-table (fn [_ col str]
                                              (if (zero? col)
@@ -41,7 +44,7 @@
                                                      :else identity)
                                                str))
                                             (cons (map :name groups) (tables/transpose (map :players groups))))]
-              [game-csv game-table group-table]))
+              [game-csv seed-matchups game-table group-table]))
         textarea-width (inc (reduce max 20 (map count game-csv)))
         option (fn [name] [:option {:key name} name])
         linked-text-area (fn [key]
@@ -80,6 +83,14 @@
      (if error?
        [:div [:b (str "Error: " validated)]]
        [:div
+        (when (seq seed-matchups)
+          [:div
+           [:div [:label [:i "Warning: seeds matched in the following games"]]]
+           [:textarea
+            {:cols textarea-width
+             :rows (count seed-matchups)
+             :read-only true
+             :value (string/join "\n" (map format-game seed-matchups))}]])
         [:div [:label "Games (CSV)"]]
         [:textarea
          {:cols textarea-width
